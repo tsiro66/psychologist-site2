@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import Navigation from "./components/Navigation";
+import Footer from "./components/Footer";
 import Preloader from "./components/Preloader";
 import SmoothScroll from "./components/SmoothScroll";
 
@@ -24,9 +25,14 @@ export default function RootLayout({
     <html lang="en" className={`h-full antialiased ${poppins.className}`}>
       <body className="min-h-full flex flex-col">
         <Preloader />
+        <Footer />
+        <Navigation />
         <SmoothScroll>
-          <Navigation />
-          {children}
+          <div className="relative z-10">
+            {children}
+          </div>
+          {/* Spacer — transparent gap that reveals fixed footer underneath */}
+          <div className="h-screen" aria-hidden="true" />
         </SmoothScroll>
       </body>
     </html>

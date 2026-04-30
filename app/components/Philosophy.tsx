@@ -6,102 +6,123 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const STATEMENT = "Healing is not about becoming someone new.";
-const FOLLOW_UP = "It\u2019s about returning to who you were before the world told you to be something else.";
+const STATEMENT_LINES = ["Healing is not about", "becoming someone new."];
+const FOLLOW_UP_LINES = [
+  "It\u2019s about returning",
+  "to who you were before the world",
+  "told you to be something else.",
+];
+
+function SplitChars({
+  lines,
+  dataAttr,
+}: {
+  lines: string[];
+  dataAttr: string;
+}) {
+  return (
+    <>
+      {lines.map((line, li) => (
+        <span className="block" key={li}>
+          {line.split("").map((ch, ci) => (
+            <span
+              key={`${li}-${ci}`}
+              {...{ [`data-${dataAttr}`]: "" }}
+              // Changed opacity-[0.06] to opacity-0
+              className="inline-block whitespace-pre opacity-0" 
+              style={{ filter: "blur(12px)" }}
+            >
+              {ch}
+            </span>
+          ))}
+        </span>
+      ))}
+    </>
+  );
+}
 
 export default function Philosophy() {
   const sectionRef = useRef<HTMLElement>(null);
+  const bgRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      /* ── Statement lines ── */
-      const statementWords = gsap.utils.toArray<HTMLElement>("[data-statement-word]");
-      gsap.from(statementWords, {
+      const statementChars = gsap.utils.toArray<HTMLElement>("[data-phil-statement]");
+      const followUpChars = gsap.utils.toArray<HTMLElement>("[data-phil-followup]");
+
+      const tl = gsap.timeline({
         scrollTrigger: {
-          trigger: "[data-statement]",
-          start: "top 80%",
-          end: "top 30%",
+          trigger: sectionRef.current,
+          start: "top top",
+          end: "bottom bottom",
           scrub: 1,
         },
-        opacity: 0.08,
-        yPercent: 40,
-        filter: "blur(6px)",
-        stagger: 0.05,
-        ease: "none",
       });
 
-      /* ── Follow-up ── */
-      gsap.from("[data-follow-up]", {
-        scrollTrigger: {
-          trigger: "[data-follow-up]",
-          start: "top 85%",
-          end: "top 50%",
-          scrub: 1,
-        },
+      /* ── Statement blur in (Starts exactly when section pins at top) ── */
+      tl.to(statementChars, {
+        opacity: 1,
+        filter: "blur(0px)",
+        duration: 0.4,
+        stagger: 0.012,
+        ease: "none",
+      }, 0);
+
+      /* ── Statement blur out ── */
+      tl.to(statementChars, {
         opacity: 0,
-        y: 30,
+        filter: "blur(12px)",
+        duration: 0.25,
+        stagger: 0.006,
         ease: "none",
-      });
+      }, 0.55);
 
-      /* ── Divider line ── */
-      gsap.from("[data-divider]", {
-        scrollTrigger: {
-          trigger: "[data-divider]",
-          start: "top 85%",
-          end: "top 60%",
-          scrub: 1,
-        },
-        scaleX: 0,
-        transformOrigin: "left center",
+      /* ── Bg to terracotta ── */
+      tl.to(bgRef.current, {
+        opacity: 1,
+        duration: 0.12,
         ease: "none",
-      });
+      }, 0.7);
 
-      /* ── Pillar cards ── */
-      const pillars = gsap.utils.toArray<HTMLElement>("[data-pillar]");
-      pillars.forEach((pillar) => {
-        gsap.from(pillar, {
-          scrollTrigger: {
-            trigger: pillar,
-            start: "top 85%",
-            end: "top 55%",
-            scrub: 1,
-          },
-          opacity: 0,
-          y: 60,
-          ease: "none",
-        });
-      });
+      /* ── Follow-up blur in ── */
+      tl.to(followUpChars, {
+        opacity: 1,
+        filter: "blur(0px)",
+        duration: 0.4,
+        stagger: 0.012,
+        ease: "none",
+      }, 0.75);
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
 
   return (
-    <section
-      ref={sectionRef}
-      className="relative py-32 md:py-44 lg:py-56 px-6 md:px-10 lg:px-16"
-    >
-      {/* ── Large statement ── */}
-      <div className="max-w-5xl mx-auto mb-16 md:mb-24">
+    <section ref={sectionRef} className="relative h-[500vh]">
+      {/* Spacer removed! The sticky div now hits top exactly when the section does */}
+
+      {/* Sticky frame — stays centered while scrolling */}
+      <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden px-6">
+        {/* bg layer — terracotta, fades in during crossfade */}
+        <div
+          ref={bgRef}
+          className="absolute inset-0 bg-overlay-terracotta opacity-0 pointer-events-none"
+        />
+
+        {/* Statement */}
         <h2
-          data-statement
-          className="text-3xl md:text-5xl lg:text-6xl font-light leading-[1.15] tracking-tight text-overlay-teal"
+          className="absolute text-center text-3xl md:text-5xl lg:text-6xl font-light leading-[1.08] tracking-tight text-overlay-teal"
         >
-          {STATEMENT.split(" ").map((word, i) => (
-            <span key={i} data-statement-word className="inline-block mr-[0.3em]">
-              {word}
-            </span>
-          ))}
+          <SplitChars lines={STATEMENT_LINES} dataAttr="phil-statement" />
         </h2>
 
+        {/* Follow-up — same size/weight */}
         <p
-          data-follow-up
-          className="mt-8 md:mt-12 max-w-2xl text-lg md:text-xl font-light leading-relaxed text-overlay-teal/70"
+          className="absolute max-w-5xl text-center text-3xl md:text-5xl lg:text-6xl font-light leading-[1.08] tracking-tight text-overlay-teal"
         >
-          {FOLLOW_UP}
+          <SplitChars lines={FOLLOW_UP_LINES} dataAttr="phil-followup" />
         </p>
       </div>
-
     </section>
   );
 }
